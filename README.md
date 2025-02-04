@@ -26,4 +26,3 @@ To predict the match outcome with regression analysis for question 1, we needed 
 
 After data cleaning and transformation, we were left with 14,472 observations and 20 variables. The table below provides a glimpse of the first 5 rows of data.
 
-
