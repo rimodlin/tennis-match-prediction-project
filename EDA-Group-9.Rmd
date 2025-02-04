@@ -1,0 +1,550 @@
+---
+title: "Exploratory Data Analysis"
+author: "STOR 320.02 Group 9"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(dplyr)
+
+# Import Data Below
+ATP <- read_csv("ATP2016-2019and2022.csv", show_col_types = FALSE)
+WTA <- read_csv("WTA2016-2019and2022.csv", show_col_types = FALSE)
+```
+
+# Creator: Riley Modlin
+
+### Q1: Is there a relationship between winners’/losers’ handedness and the number of aces they have per match in the ATP? 
+
+This could be useful to determine if using a specific hand provides a competitive advantage in tennis. Players could use this information to determine if training with a certain hand would help their performance.
+
+```{r}
+ggplot(data = ATP %>% filter(!is.na(winner_hand)), mapping = aes(x = w_ace, y = winner_hand)) +
+         geom_boxplot() +xlab("Number of Aces Per Match")+ylab("Winners' Handedness")+ggtitle("Winners' Handedness vs Aces")
+
+ggplot(data = ATP %>% filter(!is.na(loser_hand)), mapping = aes(x = l_ace, y = loser_hand)) +
+        geom_boxplot() + xlab("Number of Aces Per Match")+ylab("Losers' Handedness")+ggtitle("Losers' Handedness vs Aces")
+```
+
+### Q2: How does match minutes vary between the ATP & the WTA? 
+
+Comparing match minutes in the ATP & WTA can help determine the amount of stamina or training required to perform well for the amount of time required to play a match.
+
+```{r}
+library(knitr)
+ggplot() + 
+  geom_point(data = ATP, mapping = aes(x=...1, y=minutes, color = "ATP")) +
+  geom_point(data = WTA, mapping = aes(x=...1, y=minutes, color ="WTA")) +
+  xlab("Match")+ylab("Minutes")+ggtitle("Match vs Minutes") +
+  scale_color_manual(values=c("Blue","Red")) +
+  guides(color=guide_legend(title="Tennis Association")) +
+  ylim(0,400)
+
+ATP %>% summarize(ATP_Average_Minutes = mean(na.omit(ATP$minutes)), ATP_Minutes_Variance = var(na.omit(ATP$minutes))) %>% kable()
+
+WTA %>% summarize(WTA_Average_Minutes = mean(na.omit(WTA$minutes)), WTA_Minutes_Variance = var(na.omit(WTA$minutes))) %>% kable()
+```
+
+# Interpreter: Zhuocheng Han
+
+### Q1: How does match statistics differ by surface type?
+
+The box plots offer a comparative view of match statistics across tennis surfaces, revealing general uniformity with minor variations for most variables. This suggests that player performance and match conditions may have a more pronounced influence than surface type on these metrics.
+
+An exception is found in the “ace” count, which significantly increases on grass courts. This can be ascribed to the unique properties of grass—specifically, its lower friction and the resultant higher ball velocity—which naturally promote a greater number of nonreturnable serves.
+
+In conclusion, surface type does have a strong impact on the match statistics as a whole for all players. However, there are possibilities that individual players’ performance would differ greatly by surfaces.
+
+```{r}
+atp<-ATP[!ATP$surface=="carpet",]
+atp_new <- atp[, c("surface", "minutes", "w_ace", "w_df", "w_svpt", "w_1stIn", "w_1stWon", "w_2ndWon", "w_SvGms", "w_bpSaved", "w_bpFaced",
+                        "l_ace", "l_df", "l_svpt", "l_1stIn", "l_1stWon", "l_2ndWon", "l_SvGms", "l_bpSaved", "l_bpFaced")]
+
+var<- c("surface", "minutes", "w_ace", "w_df", "w_svpt", "w_1stIn", "w_1stWon", "w_2ndWon", "w_SvGms", "w_bpSaved", "w_bpFaced",
+                        "l_ace", "l_df", "l_svpt", "l_1stIn", "l_1stWon", "l_2ndWon", "l_SvGms", "l_bpSaved", "l_bpFaced")
+
+for (i in 1:length(var)){
+  p <- ggplot(atp_new, aes_string(x = "surface", y = var[i])) + 
+    geom_boxplot() +
+    labs(title = "Distribution of Minutes Across Tennis Surfaces", y = var[i], x = "Surface") +
+    theme_light() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  print(p)
+}
+
+```
+
+### Q2: How does the number of aces influence the match duration?
+
+Match duration shapes tennis strategy, influencing training for endurance, tactical approaches for different surfaces, and equipment choices for comfort. Players also plan nutrition and hydration for sustained energy, mental training for focus, and recovery protocols to handle the physical demands of long matches. The preliminary hypothesis posited a negative correlation between the number of aces served and match duration, under the assumption that aces, as expedient conclusions to points, would abbreviate the length of a match. Contrary to this expectation, the analysis of the data across various surface types reveals a positive correlation between the total number of aces and the duration of the match. This observation is statistically plausible as a longer match duration inherently provides more serving opportunities, thereby increasing the potential for aces. However, for the same number of aces, the duration of the match exhibits considerable variability, indicating that other factors such as break points faced and break points saved and number of games served also significantly influence match length. The presence of aces alone does not dictate the temporal extent of the game; rather, it is the interplay of multiple game dynamics that collectively determine the duration. Further statistical modeling, including regression analysis controlling for these additional variables, would provide a more nuanced understanding of the factors that most impact match duration.
+
+```{r}
+atp$total_ace <- atp$w_ace + atp_new$l_ace
+atp<-atp[!atp$surface=="carpet",]
+
+ggplot(atp, aes(x=total_ace, y = minutes))+
+  geom_point()+
+  geom_smooth(method = 'lm')
+
+ggplot(atp, aes(x=total_ace, y = minutes, color=surface))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  coord_cartesian(xlim = c(NA, 100), ylim = c(NA, 600))
+
+ggplot(atp, aes(x=w_ace, y = minutes))+
+  geom_point()+
+  geom_smooth(method = 'lm')
+
+ggplot(atp, aes(x=l_ace, y = minutes))+
+  geom_point()+
+  geom_smooth(method = 'lm')
+```
+
+# Orator: Brian Surless
+
+### Q1: How does the distribution for match durations differ between different major tournaments?
+
+Here we are able to see that the WTA and ATP have a few of the same popular tournaments but also some that aren’t applicable for the ATP. I found it interesting that the ATP had a higher match duration on average across different tournaments. I also found it interesting that Dubai had a lower average match duration in relation to the other tournaments in the ATP.
+
+```{r}
+duration_WTA = WTA %>%
+  mutate(tourney_name2 = ifelse(str_detect(tourney_name, "Fed Cup|BJK Cup"), "Fed/BJK Cup", tourney_name)) %>%
+  mutate(tourney_name2 = str_replace_all(tourney_name2, "US open", "US Open")) %>%
+  filter(tourney_name2 %in% c("Australian Open", "Wimbledon", "US Open", "Indian Wells", "Miami", "Rome", "Olympics", "Dubai", "Madrid", "Fed/BJK Cup")) %>%
+  filter(minutes < 275)
+  
+ggplot(data = duration_WTA, aes(x = reorder(tourney_name2, minutes), y = minutes)) +
+  geom_boxplot() +
+  labs(title = "WTA Match Duration Distribution Across Popular Tournaments",
+       x = "Tournament",
+       y = "Match Duration (minutes)") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+duration_ATP = ATP %>%
+  mutate(tourney_name2 = ifelse(str_detect(tourney_name, "Fed Cup|BJK Cup"), "Fed/BJK Cup", tourney_name)) %>%
+  mutate(tourney_name2 = str_replace_all(tourney_name2, "US open", "US Open")) %>%
+  filter(tourney_name2 %in% c("Australian Open", "Wimbledon", "US Open", "Indian Wells", "Miami", "Rome", "Olympics", "Dubai", "Madrid", "Fed/BJK Cup")) %>%
+  filter(minutes < 275)
+  
+ggplot(data = duration_ATP, aes(x = reorder(tourney_name2, minutes), y = minutes)) +
+  geom_boxplot() +
+  labs(title = "ATP Match Duration Distribution Across Popular Tournaments",
+       x = "Tournament",
+       y = "Match Duration (minutes)") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Q2: Is there a relationship for how players from different countries perform on different surfaces?
+
+This question can help us explore whether or not players from different countries have an advantage in matches on specific surfaces, giving further insight into strategy. Here it is clear to see that the USA is leading for both wins and losses for most of the matches per each surface. One factor that isn’t illustrated in these visualizations is the win percentages for each country which means that there may be potential biases for certain countries who have had more overall matches than other countries. This may explain why the USA is leading in most of these count and proportion based charts. This leads me curious to learn more about the win percentage for each individual country on each surface. This win percentage data could then be used to factor into match result predictability if there is a trend of a specific country performing better overall on a specific surface than their opponent.
+
+```{r}
+prop_winners_WTA = WTA %>%
+  group_by(winner_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  mutate(proportion = count / sum(count)) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(prop_winners_WTA, aes(x = surface, y = proportion, fill = fct_reorder(winner_ioc, proportion))) +
+  geom_bar(stat = "identity") +
+  labs(title = "WTA Top 10 Countries with Most Wins on Different Surfaces",
+       x = "Surface",
+       y = "Proportion of Wins") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+prop_winners_ATP = ATP %>%
+  group_by(winner_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  mutate(proportion = count / sum(count)) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(prop_winners_ATP, aes(x = surface, y = proportion, fill = fct_reorder(winner_ioc, proportion))) +
+  geom_bar(stat = "identity") +
+  labs(title = "ATP Top 10 Countries with Most Wins on Different Surfaces",
+       x = "Surface",
+       y = "Proportion of Wins") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+freq_winners_WTA = WTA %>%
+  group_by(winner_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(freq_winners_WTA, aes(x = surface, y = count, fill = fct_reorder(winner_ioc, count))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "WTA Top 10 Countries with Most Wins on Different Surfaces",
+       x = "Surface",
+       y = "Number of Wins") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+freq_winners_ATP = ATP %>%
+  group_by(winner_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(freq_winners_ATP, aes(x = surface, y = count, fill = fct_reorder(winner_ioc, count))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "ATP Top 10 Countries with Most Wins on Different Surfaces",
+       x = "Surface",
+       y = "Number of Wins") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+prop_loser_WTA = WTA %>%
+  group_by(loser_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  mutate(proportion = count / sum(count)) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(prop_loser_WTA, aes(x = surface, y = proportion, fill = fct_reorder(loser_ioc, proportion))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Top 10 Countries with Most Losses on Each Surface",
+       x = "Surface",
+       y = "Proportion of Losses",
+       colour = "Country") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+prop_loser_ATP = ATP %>%
+  group_by(loser_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  mutate(proportion = count / sum(count)) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(prop_loser_ATP, aes(x = surface, y = proportion, fill = fct_reorder(loser_ioc, proportion))) +
+  geom_bar(stat = "identity") +
+  labs(title = "ATP Top 10 Countries with Most Losses on Each Surface",
+       x = "Surface",
+       y = "Proportion of Losses",
+       colour = "Country") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+freq_losers_WTA = WTA %>%
+  group_by(loser_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(freq_losers_WTA, aes(x = surface, y = count, fill = fct_reorder(loser_ioc, count))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "WTA Top 10 Countries with Most Losses on Each Surface",
+       x = "Surface",
+       y = "Number of Losses",
+       colour = "Country") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+
+freq_losers_ATP = ATP %>%
+  group_by(loser_ioc, surface) %>%
+  summarize(count = n()) %>%
+  group_by(surface) %>%
+  top_n(10, wt = count) %>%
+  ungroup()
+
+ggplot(freq_losers_ATP, aes(x = surface, y = count, fill = fct_reorder(loser_ioc, count))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "ATP Top 10 Countries with Most Losses on Each Surface",
+       x = "Surface",
+       y = "Number of Losses",
+       colour = "Country") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill = guide_legend(title = "Countries"))
+```
+
+# Orator 2: Rishyendra Medamanuri
+
+### Q1: How do player points vary by tournament level?
+
+```{r}
+#WTA DATA
+wta_1 <- WTA %>%
+  select(surface, tourney_level, winner_rank_points, loser_rank_points) %>%
+  filter(!is.na(surface) & !is.na(tourney_level) & !is.na(winner_rank_points) & !is.na(loser_rank_points)) %>%
+  mutate(total_points = winner_rank_points + loser_rank_points, 
+         tourney_level = factor(tourney_level, levels=c("G", "F", "D", "I", "P")))
+
+ggplot(wta_1, aes(x = tourney_level, y = total_points, fill = tourney_level)) +
+  geom_boxplot() +
+  labs(x = "Tournament Level", y = "Player Rank Points", title = "Distribution of Points by WTA Tournament Level") +
+  scale_fill_manual(values = c("G" = "red", "F" = "green", "D" = "blue", "I" = "orange", "P" = "purple"),
+                    labels = c("Grand Slam", "Forth Worth Finals", "Billy Jean King Cup", "WTA 100", "WTA 500")) +
+  theme_minimal()
+
+#ATP DATA
+atp_1 <- ATP %>%
+  select(surface, tourney_level, winner_rank_points, loser_rank_points) %>%
+  filter(!is.na(surface) & !is.na(tourney_level) & !is.na(winner_rank_points) & !is.na(loser_rank_points)) %>%
+  mutate(total_points = winner_rank_points + loser_rank_points,
+         tourney_level = factor(tourney_level, levels = c("F", "G", "A", "M", "D")))
+
+ggplot(atp_1, aes(x = tourney_level, y = total_points, fill = tourney_level)) +
+  geom_boxplot() +
+  labs(x = "Tournament Level", y = "Player Rank Points", title = "Distribution of Points by ATP Tournament Level") +
+  scale_fill_manual(values = c("F" = "orange", "G" = "green", "A" = "red", "M" = "blue", "D" = "purple"),
+                    labels = c("Tour Finals", "Grand Slam", "ATP Cup", "Masters 1000", "Davis Cup")) +
+  theme_minimal()
+```
+
+Women athletes’ ranking points are on average the greatest for the Forth Worth Finals tournament, while the WTA 500 tournaments had the second highest average ranking points, the Grand Slams had the third highest ranking points, the WTA 100 had the fourth highest ranking points, and the Billy Jean King Cup had the lowest average ranking points. One thing to note is that specifically the Grand Slams and the WTA 500 tournaments had a lot of players with significantly higher ranking points compared to their average.
+
+From the ATP box plot above, the mens’ ranking points on average are significantly higher for the ATP Tour Finals, followed by the Master’s 1000, then the Grand Slams, then the ATP Cup, and finally the Davis Cup. The ATP Tour Finals had a small interquartile range which makes sense because only 8 players are chosen for this tournament and they are some of the top players. The Grand Slams and Masters 1000 tournaments have a relatively low average points compared to some of the outliers for the plots for these two tournaments. This can be explained due to the large draw and qualifiers size for these tournaments, meaning many players are in the middle-to-bottom tiers with a few players in the top-tier. What’s surprising is how the ATP Cup has the second lowest average ranking points, but there are a lot of outlier athletes that are spread out and have high ranking points.
+
+### Q2: How does the distribution of players of various rankings change per level of match? I.e. the distribution of the number of grand slam matches played by the top 10 players, the distribution of the number of Masters 1000 level matches played by the top 100 players, etc.
+
+```{r}
+wta_2 <- WTA %>%
+  mutate(tourney_level = case_when(
+    tourney_level == "D" ~ "Davis Cup",
+    tourney_level == "F" ~ "Forth Worth Finals",
+    tourney_level == "G" ~ "Grand Slam",
+    tourney_level == "I" ~ "Masters 1000",
+    tourney_level == "P" ~ "WTA 500"
+  )) %>%
+  select(tourney_level, winner_rank, loser_rank) %>%
+  group_by(tourney_level) %>%
+  summarise(mean_winner_rank = mean(winner_rank, na.rm = TRUE),
+            mean_loser_rank = mean(loser_rank, na.rm = TRUE),
+            sd_winner_rank = sd(winner_rank, na.rm = TRUE),
+            sd_loser_rank = sd(loser_rank, na.rm = TRUE))
+wta_2
+
+atp_2 <- ATP %>%
+  mutate(tourney_level = case_when(
+    tourney_level == "F" ~ "Tour Finals",
+    tourney_level == "G" ~ "Grand Slam",
+    tourney_level == "A" ~ "ATP Cup",
+    tourney_level == "M" ~ "Masters 1000",
+    tourney_level == "D" ~ "Davis Cup"
+  )) %>%
+  select(tourney_level, winner_rank, loser_rank) %>%
+  group_by(tourney_level) %>%
+  summarise(mean_winner_rank = mean(winner_rank, na.rm = TRUE),
+            mean_loser_rank = mean(loser_rank, na.rm = TRUE),
+            sd_winner_rank = sd(winner_rank, na.rm = TRUE),
+            sd_loser_rank = sd(loser_rank, na.rm = TRUE))
+atp_2
+```
+The first table above is for the WTA data. Forth Worth Finals had the highest rankings and a very small standard deviation, indicating that this tournament is reserved for the best players. On the other hand, the Davis Cup had a very low winner and loser ranking and a very high winner and loser ranking standard deviation, meaning that there were players of a large variety of rankings in this tournament. A constant trend in each tournament except the Forth Worth Finals is that the mean winner rank was always greater than the mean loser rank, and the standard deviation of winner rink is lower than the standard deviation of loser rank. This trend hints that player rank may play a role in deciding the outcome of a match, so this relationship can be studied further in depth to potentially develop a model to predict the winner of a match or even a tournament.
+
+The second table above is for the ATP data. The ATP Tour Finals had the highest player rankings and the smallest standard deviation, which makes sense because only 8 of the best players are invited to this tournament. The ATP Cup, Grand Slams, and Masters 1000 tournaments on average didn’t have a mean or standard deviation that is too noteworthy. On the other hand, the Davis Cup had a very low mean player ranking and a very high standard deviation for player ranking. Similar to the WTA data, other than the Tour Finals, all other ATP tournament had a lower mean winner rank than mean loser rank and a low standard deviation for winner rank than for loser rank.
+
+# Deliverer: Carson Jolly
+
+### Q1: How does the winner’s country influence the duration of the match?
+
+Looking at this relationship could lead someone to further investigate the different strategies and training regimes that players from various countries use. We could use to data to later investigate if slower or quicker playing strategies lead to the most success. 
+
+```{r}
+
+ATP.1 <- ATP %>%
+  select(winner_ioc, minutes) %>%
+  filter(!is.na(winner_ioc) & !is.na(minutes)) %>%
+  mutate(winner_ioc = tolower(winner_ioc))
+
+ATP_stats <- ATP.1 %>%
+  group_by(winner_ioc) %>%
+  summarize(
+    avg_duration = mean(minutes),
+    matches_played = n()
+  )
+
+ATP_stats <- ATP_stats %>%
+  arrange(avg_duration)
+
+ggplot(ATP_stats, aes(x = reorder(winner_ioc, -avg_duration), y = avg_duration)) +
+  geom_bar(stat = "identity", fill = "skyblue", width = 0.8) +
+  labs(
+    title = "Average Match Duration by Winner's Country (ATP)",
+    x = "Winner's Country",
+    y = "Average Duration (minutes)"
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+WTA.1 <- WTA %>%
+  select(winner_ioc, minutes) %>%
+  filter(!is.na(winner_ioc) & !is.na(minutes)) %>%
+  mutate(winner_ioc = tolower(winner_ioc))
+
+WTA_stats <- WTA.1 %>%
+  group_by(winner_ioc) %>%
+  summarize(
+    avg_duration = mean(minutes),
+    matches_played = n()
+  )
+
+WTA_stats <- WTA_stats %>%
+  arrange(avg_duration)
+
+ggplot(WTA_stats, aes(x = reorder(winner_ioc, -avg_duration), y = avg_duration)) +
+  geom_bar(stat = "identity", fill = "purple", width = 0.8) +
+  labs(
+    title = "Average Match Duration by Winner's Country (WTA)",
+    x = "Winner's Country",
+    y = "Average Duration (minutes)"
+  ) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+### Q2: How does the difference between the ranks of both players affect the duration of the match?
+
+Looking at this relationship would allow us to start determining the implications of match duration. In this case, we are looking to see if closer ranked matchups are more competitive, and thus leading to the longer matches. Furthermore, we could start to get insight on the strategies of top, and bottom, ranked players. It will also be important to see the causes and effects of the outlier values. 
+
+```{r}
+ATP.cj <- ATP %>%
+  mutate(rank_diff = winner_rank - loser_rank)
+
+ggplot(ATP.cj, aes(x = rank_diff, y = (minutes/best_of))) +
+  geom_point() +
+  labs(
+    x = "Rank Difference (Winner Rank - Loser Rank)",
+    y = "Match Duration (minutes per round)",
+    title = "ATP Rank Difference vs. Match Duration"
+  )
+
+
+model_Q2 <- lm(minutes ~ rank_diff, data = ATP.cj)
+summary(model_Q2)
+
+WTA.cj <- WTA %>%
+  mutate(rank_diff_WTA = winner_rank - loser_rank)
+
+ggplot(WTA.cj , aes(x = rank_diff_WTA, y = (minutes/best_of))) +
+  geom_point() +
+  labs(
+    x = "Rank Difference (Winner Rank - Loser Rank)",
+    y = "Match Duration (minutes per round)",
+    title = "WTA Rank Difference vs. Match Duration"
+  )
+
+
+model_Q2_WTA <- lm(minutes ~ rank_diff_WTA, data = WTA.cj)
+summary(model_Q2_WTA)
+
+
+```
+
+# Follow-up Questions
+
+### New Questions Based Off Initial Investigation
+
+- Q1: Which stats are most influential in predicting the winner of a match in the ATP?
+- Q2: How do averages for match stats compare between winners and losers in the ATP?
+- Q3: How does the rank difference between players impact match duration for specific surfaces?
+- Q4: How does the distribution of player rankings change between each individual tournament within a tournament level?
+
+### Investigation of Follow-up Questions
+
+Our group decided to investigate Q2 and Q3 in more detail. 
+
+```{r}
+#Q2
+
+winner_averages = ATP %>% select(w_ace, w_df, w_svpt, w_1stIn, w_1stWon, w_2ndWon, w_SvGms, w_bpSaved, w_bpFaced) %>%
+  summarize(Avg_w_ace = mean(na.omit(w_ace)), Avg_w_df = mean(na.omit(w_df)), Avg_w_svpt = mean(na.omit(w_svpt)), Avg_w_1stIn = mean(na.omit(w_1stIn)), Avg_w_1stWon = mean(na.omit(w_1stWon)), Avg_w_2ndWon = mean(na.omit(w_2ndWon)), Avg_w_SvGms = mean(na.omit(w_SvGms)), Avg_w_bpSaved = mean(na.omit(w_bpSaved)), Avg_w_bpFaced = mean(na.omit(w_bpFaced)))
+ 
+loser_averages = ATP %>% select(l_ace, l_df, l_svpt, l_1stIn, l_1stWon, l_2ndWon, l_SvGms, l_bpSaved, l_bpFaced) %>%
+  summarize(Avg_l_ace = mean(na.omit(l_ace)), Avg_l_df = mean(na.omit(l_df)), Avg_l_svpt = mean(na.omit(l_svpt)), Avg_l_1stIn = mean(na.omit(l_1stIn)), Avg_l_1stWon = mean(na.omit(l_1stWon)), Avg_l_2ndWon = mean(na.omit(l_2ndWon)), Avg_l_SvGms = mean(na.omit(l_SvGms)), Avg_l_bpSaved = mean(na.omit(l_bpSaved)), Avg_l_bpFaced = mean(na.omit(l_bpFaced)))
+ 
+winner_averages %>% kable()
+loser_averages %>% kable()
+
+categories <- c("ace", "df", "svpt", "1stIn", "1stWon", "2ndWon", "SvGms", "bpSaved", "bpFaced")
+winner_values <- c(winner_averages$Avg_w_ace,winner_averages$Avg_w_df,winner_averages$Avg_w_svpt,winner_averages$Avg_w_1stIn, winner_averages$Avg_w_1stWon, winner_averages$Avg_w_2ndWon, winner_averages$Avg_w_SvGms,winner_averages$Avg_w_bpSaved, winner_averages$Avg_w_bpFaced)
+loser_values <- c(loser_averages$Avg_l_ace,loser_averages$Avg_l_df,loser_averages$Avg_l_svpt,loser_averages$Avg_l_1stIn, loser_averages$Avg_l_1stWon, loser_averages$Avg_l_2ndWon, loser_averages$Avg_l_SvGms,loser_averages$Avg_l_bpSaved, loser_averages$Avg_l_bpFaced)
+# Assuming you already have winner_values, loser_values, and categories defined
+ 
+# Combine the winner and loser averages into a long format data frame
+averages_long <- data.frame(
+  Category = rep(categories, times = 2),
+  Average = c(winner_values, loser_values),
+  Type = rep(c("Winner", "Loser"), each = length(categories))
+)
+ 
+# Plot the data
+ggplot(averages_long, aes(x = Category, y = Average, fill = Type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7)) +
+  labs(title = "Comparison of Winner and Loser Averages",
+       x = "Statistical Category", 
+       y = "Average Value") +
+  scale_fill_manual(values = c("Winner" = "pink", "Loser" = "skyblue")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+The follow-up question “How do averages for match stats compare between winners and losers in the ATP?” is interesting for investigation because it allows us to start looking at what statistics may be most important to win a match. We explored this question by creating a table of the averages of match statistics for winners and losers, such as aces, double faults, serve points, and more. We also compared these averages between winners and losers in a bar chart. We thought it was interesting that winners have a higher average for aces and a lower average for double faults. These two stats could be particularly useful for predicting match outcome in the future.
+
+```{r}
+#Q3
+
+ggplot(ATP.cj, aes(x = rank_diff, y = minutes, color = surface)) +
+  geom_point() + geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Rank Difference (Winner Rank - Loser Rank)",
+    y = "Match Duration (minutes)"
+  ) +
+  facet_wrap(~surface, scales = "free_y")
+
+mod.1 <- lm(minutes ~ rank_diff, data = ATP.cj)
+summary(mod.1)
+
+ggplot(WTA.cj, aes(x = rank_diff_WTA, y = minutes, color = surface)) +
+  geom_point() + geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Rank Difference (Winner Rank - Loser Rank)",
+    y = "Match Duration (minutes)"
+  ) + facet_wrap(~surface, scales = "free_y")
+
+mod.2 <- lm(minutes ~ rank_diff_WTA, data = WTA.cj)
+summary(mod.2)
+```
+
+The follow-up question “How does the rank difference between players impact match duration for specific surfaces? is interesting for investigation as it allows us to continue looking at the relationship between rank difference and match duration, which we studied in our initial EDA. Furthermore, it will likely help us to reveal insights into the competitiveness of tennis matches, player development and training strategies, and tournament scheduling, which are all aspects that we are eager to explore. We explored this question by creating scatter plots which we then split up individually by facet wrapping. We found that for both the ATP and WTA, grass had the most variability in match minutes. Although the model shows significance, the distribution is normal for some of the graphs indicating that there might not be a strong correlation at times. 
+
+
+# Summary
+
+After our initial investigation, our group noticed many intriguing insights and patterns throughout our initial exploratory data analysis. Firstly, we observed that women players’ ranking points contained variation across tournaments, with the Forth Worth Finals tournament consistently having the highest average ranking points. Additionally, we found it intriguing that specific tournaments, like the Grand Slam and WTA 500, contained many outliers with significantly higher ranking points than the average. After doing the same exploration for the ATP, we discovered that the ATP Tour Finals showed the highest average ranking points, followed by the Masters and ATP Cup. These observations began to provide some insight into the competitive landscape of tennis tournaments and raised further questions about the factors influencing player performance and rankings. This then led us to our analysis of the impact of surface type on many different match statistics. We found that the ace count notably increased on grass courts, which is something that could be investigated further. Eventually, this led us to probably our most surprising finding, which came after our research into match duration and aces. Contrary to our initial beliefs, we discovered a positive correlation between the total number of aces and the match duration, which highlighted the various variables and dynamics that go into determining the length of a tennis match. Overall, our findings informed our understanding of tennis statistics, but they also left us with tons of questions that required further exploration into the intricate factors that influence match duration and player performance. 
+
+
+
+All of the follow-up questions were well thought out and provided us with valuable insights into the various aspects of tennis statistics and match dynamics. The first question "How do averages for match stats compare between winners and losers in the ATP?" was interesting as it looked into the factors that might influence match outcomes. To address this question, we created tables detailing the averages of match statistics for winners and losers, including aces and double faults. These tables allowed us to directly compare these averages between winners and losers. Notably, we found that winners tend to have a higher average for aces and a lower average for double faults, suggesting that these statistics may be crucial in predicting match results. This finding provides a foundation for further research on the most influential statistics for predicting match winners.The next question was: "How does the rank difference between players impact match duration for specific surfaces?". To explore, we created scatterplots and facet-wrapped them individually for both ATP and WTA, with a focus on different surfaces. Our findings showed that grass courts exhibited the most variability in match minutes for both ATP and WTA, allowing us to see the competitiveness and potential strategic implications of playing on grass.The question regarding "How does the distribution of player rankings change between each individual tournament within a tournament level" helped us to understand the dynamics of player rankings within specific tournament levels. Our analysis revealed significant standard deviation in player rankings across various tournament levels, sometimes varying by up to 400 rankings. Just like the other follow-up questions, this observation could lead to further exploration into factors affecting player development, training strategies, and tournament scheduling
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
