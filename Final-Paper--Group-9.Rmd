@@ -1,0 +1,477 @@
+---
+title: "Tennis Match Outcome and Duration Prediction Project"
+author: "STOR 320.02 Group 9"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(kableExtra)
+library(modelr)
+library(broom)
+library(purrr)
+```
+
+# INTRODUCTION
+
+With a rich history and a vast global outreach, Tennis is arguably the most popular sport in the world. Beyond its contributions to individual health and community engagement, tennis has become a powerful force when it comes to building international connections. Major tournaments, containing players from most of the major countries, attract tens of millions of viewers worldwide, creating a shared experience that transcends cultural and geographic boundaries. In this dynamic world of aces and volleys, tennis stands as a sport that reaches much further than meets the eye, influencing individuals and societies alike.
+
+Our analysis focuses on individual tennis matches as we look to determine how to predict match outcomes and match durations. Through our initial studies, we found that a tennis match can be influenced by a wide variety of variables. As we dove into the relationships between these variables in our exploratory data analysis, we aimed to focus on questions that sought to discover how important match-specific statistics influence a tennis match. Through deep analysis and heavy discussion, we felt that these two questions would be interesting and important to explore further.
+
+Q1: Which match statistics are most useful in predicting the outcome of tennis matches in the Association of Tennis Professionals (ATP)?
+
+Q2: Which match statistics are most useful in predicting the duration of matches in the ATP?
+
+For our first question, we investigated how to predict the winner of tennis matches using match statistics from about 15,000 matches in the Association of Tennis Professionals (ATP). Being able to predict match outcomes can be very useful in sports betting. If you can accurately predict who will win a match, you can bet on the right athlete and win money! Statistical prediction may not always be 100 percent accurate, but it can give people a competitive edge when placing bets, by using real data and evidence, rather than randomly choosing who will win or choosing based on a personal hunch. Another benefit of predicting the winner of tennis matches is for tennis players & coaches themselves. Knowing which match statistics are most helpful in predicting a winner, can allow tennis players to focus their practice on particular areas, such as perfecting their serves to earn more aces during matches. 
+
+For our second question, we examined how to predict the match duration, in minutes, of each match in our dataset. Knowing match duration can be helpful to tennis players and coaches alike, as endurance is important when it comes to performing well throughout long matches. Predicting how long a match will last, can help tennis players adequately train and prepare to perform well on the big day. Another interesting use of predicting match duration could be to help schedule matches, especially those that air on television. Allotting enough air time for each match can ensure that viewers don’t miss a minute of entertainment. Lastly, predicting match duration can help predict how much money might be made from those attending matches in-person. Perhaps, the longer a match is, the more money will be spent by attendees on concessions and merchandise.
+
+
+# DATA
+
+Our primary dataset is Jeff Sackmann's comprehensive tennis ATP match dataset, which covers match data from 1920 to the present day. This dataset is free and publicly available on GitHub, which makes it an ideal resource for our analysis. The dataset is organized into yearly files with singular match data, providing an easy-to-navigate and clear structure. For our project, we decided to use the ATP match dataset from 2016 to 2019 and 2022. Due to the changing climate of the sport, we were interested in recent data. Furthermore, we left out 2020 and 2021 as further analysis of the data revealed an abundance of NA entries that we concluded to be a result of tournaments being canceled during the pandemic. 
+
+Since one of our focuses was always on the prediction of match results, we cleaned our dataset accordingly. The way certain variables were structured, in which the winner and loser were already denoted in the name of the variable, made it difficult for further analysis to be applied. The dataset also included many variables that we were not concerned with and were subsequently removed during cleaning, two examples were player country and player ID. The variables we kept were match statistics that we concluded, through analysis, would have the most influential impact on our questions. 
+
+The variables in our data are mostly match statistics for the two players that competed in each match. **player1_ace** and **player2_ace** display the number of aces each respective player earned during the match. **player1_df** and **player2_df** are the number of double faults, **player1_svpt** and **player2_svpt** are the number of serve points, **player1_1stIn** and **player2_1stIn** are the number of first serves made, **player1_1stWon** and **player2_1stWon** are the number of first-serve points won, **player1_2ndWon** and **player2_2ndWon** are the number of second-serve points won, **player1_SvGms** and **player2_SvGms** are the number of serve games, **player1_bpSaved** and **player2_bpSaved** are the number of break points saved,  and **player1_bpFaced** and **player2_bpFaced** are the number of break points faced. **player1_won** is a binary variable that displays 1 when Player 1 won the match and 0 when Player 2 won the match. **minutes** displays the duration of each match in minutes.
+
+To predict the match outcome with regression analysis for question 1, we needed to find a way to randomize the player number and mask the match result. We defined a custom function, shuffle_players, to anonymize the dataset by randomly assigning match statistics to two hypothetical players - Player 1 and Player 2 - in each match record. This approach ensured the blind analysis' integrity by obfuscating the identities of the winners and losers. Applying this function to the dataset, we ensured that each match’s data was individually randomized along with a binary outcome variable indicating whether Player 1 won.
+
+After data cleaning and transformation, we were left with 14,472 observations and 20 variables. The table below provides a glimpse of the first 5 rows of data.
+
+```{r, include= F}
+#Function to shuffle winner and loser stats 
+
+data <- read_csv("ATP2016-2019and2022.csv", show_col_types = FALSE) 
+
+set.seed(216)
+shuffle_players <- function(row){
+
+  
+if (runif(1) > 0.5) {
+
+# Player 1 is the winner
+
+c(row[grep("^w_", names(row))], row[grep("^l_",names(row))], 1)
+
+} else {
+
+# Player 1 is the loser
+
+c(row[grep("^l_", names(row))], row[grep("^w_",names(row))], 0)
+
+}
+}
+  
+#Apply the transformation
+
+transformed_data <-data.frame(t(apply(data, 1, shuffle_players)))
+
+# Rename columns
+
+colnames(transformed_data) <-c(sub("w_","player1_", colnames(data)[grep("^w_", colnames(data))]), sub("l_",
+
+"player2_", colnames(data)[grep("^l_", colnames(data))]),"player1_won")
+
+for(col in names(transformed_data)){
+  transformed_data[[col]] = as.numeric(transformed_data[[col]])
+}
+
+final_data = transformed_data %>% 
+  mutate(minutes = data$minutes)
+#Data Table (Remember change echo to F)
+
+```
+
+```{R, echo = F}
+
+head(final_data, 5) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
+  scroll_box(width = "900px")
+
+```
+***
+***
+The bar chart below provides a closer look at a singular match and compares Player 1’s and Player 2’s stats.
+
+
+```{r, echo = F}
+
+set.seed(216)
+categories <- c("ace", "df", "svpt", "1stIn", "1stWon", "2ndWon", "SvGms", "bpSaved", "bpFaced")
+
+values <- c(final_data$player1_ace[1],final_data$player1_df[1],final_data$player1_svpt[1],final_data$player1_1stIn[1],final_data$player1_1stWon[1],final_data$player1_2ndWon[1],final_data$player1_SvGms[1],final_data$player1_bpSaved[1],final_data$player1_bpFaced[1],final_data$player2_ace[1],final_data$player2_df[1],final_data$player2_svpt[1], final_data$player2_1stIn[1],final_data$player2_1stWon[1], final_data$player2_2ndWon[1], final_data$player2_SvGms[1], final_data$player2_bpSaved[1], final_data$player2_bpFaced[1])
+
+bar_plot_data <- data.frame(
+  Category = categories,
+  Values = values,
+  Type = c("Player 1","Player 1","Player 1","Player 1","Player 1","Player 1","Player 1","Player 1","Player 1","Player 2","Player 2","Player 2","Player 2","Player 2","Player 2","Player 2","Player 2","Player 2")
+)
+
+ggplot(bar_plot_data, aes(x = Category, y = values, fill = Type)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7)) +
+  labs(
+    title = "Match 1: Player 1 vs Player 2",
+    x = "Statistical Category",
+    y = "Value"
+  ) +
+  scale_fill_manual(values = c("Player 1" = "pink", "Player 2" = "skyblue"), name = NULL) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title.x = element_text(margin = margin(t = 10)),  # Increase space above x-axis title
+    axis.title.y = element_text(margin = margin(r = 10)),  # Increase space to the right of y-axis title
+    plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold title
+  )
+
+
+
+```
+
+# RESULTS
+
+###  Question 1
+
+```{r, include= F}
+set.seed(216)
+
+transformed_data$split = sample(x=c("TRAIN","TEST"),replace=T,size = 14472,prob=c(0.8,0.2))
+TRAIN = filter(transformed_data, split == "TRAIN")
+TEST = filter(transformed_data, split == "TEST")
+
+sample.in=sample(1:dim(TRAIN)[1],
+size=floor(0.8*dim(TRAIN)[1]))
+
+TRAIN.IN=na.omit(TRAIN[sample.in,
+-c(20)])
+
+TRAIN.OUT=na.omit(TRAIN[-sample.in,
+-c(20)])
+
+TRAIN.IN=na.omit(TRAIN.IN[sample.in,
+-c(3,7,12,16)])
+
+TRAIN.OUT=na.omit(TRAIN.OUT[-sample.in,
+-c(3,7,12,16)])
+
+logmod1 = glm(player1_won ~ .^3, family = "binomial", data = TRAIN.IN)
+arrange(tidy(logmod1)[, c("term", "estimate", "p.value")], p.value)
+
+logmod2 = glm(player1_won ~ .*., family = "binomial", data = TRAIN.IN)
+arrange(tidy(logmod2)[, c("term", "estimate", "p.value")], p.value)
+
+logmod3 = glm(player1_won ~ ., family = "binomial", data = TRAIN.IN)
+arrange(tidy(logmod3)[, c("term", "estimate", "p.value")], p.value)
+
+logmod4 = step(logmod3, direction = "backward")
+summary(logmod4)
+
+nullmod = glm(player1_won~1, data = TRAIN.IN, family = "binomial")
+logmod5 = step(nullmod, scope = list(lower=nullmod,upper = logmod3), direction = "forward")
+
+TRAIN.OUT2 = TRAIN.OUT %>%
+  mutate(p1 = predict(logmod1, newdata=TRAIN.OUT, type="response"),
+         p2 = predict(logmod2, newdata=TRAIN.OUT, type="response"),
+         p3 = predict(logmod3, newdata=TRAIN.OUT, type="response"),
+         p4 = predict(logmod4, newdata=TRAIN.OUT, type="response")) %>%
+  select(player1_won, p1, p2, p3, p4) %>%
+  mutate(s1 = ifelse(p1<0.5, 0, 1),
+         s2 = ifelse(p1<0.5, 0, 1),
+         s3 = ifelse(p1<0.5, 0, 1),
+         s4 = ifelse(p1<0.5, 0, 1)) %>%
+  na.omit() %>%
+  mutate(class = ifelse(player1_won == s4, "correct", ifelse(player1_won < s4, "false positive", "false negative")))
+
+RESULTS1 = table(TRAIN.OUT2$player1_won, TRAIN.OUT2$s1) %>%
+  prop.table()
+RESULTS2 = table(TRAIN.OUT2$player1_won, TRAIN.OUT2$s2) %>%
+  prop.table()
+RESULTS3 = table(TRAIN.OUT2$player1_won, TRAIN.OUT2$s3) %>%
+  prop.table()
+RESULTS4 = table(TRAIN.OUT2$player1_won, TRAIN.OUT2$s4) %>%
+  prop.table()
+```
+
+
+In our analysis, we began by filtering out a dataset to include all relevant statistics for our study. We then fitted a Generalized Linear Model (GLM) using a logistical approach in three distinct ways: one incorporating up to third-degree interactions, another with only two-variable interactions, and a third with no interactions. Interestingly, all three models exhibited identical sensitivity, specificity, and other statistical measures. Consequently, we opted to use the simplest, no-interaction model. This choice was further validated when we conducted forward and backward selection processes on the no-interaction model, which indicated that all thirteen predictors were significant.
+
+
+```{R, include = F}
+actual.1 <- TRAIN.OUT2$player1_won
+predicted.1 <- TRAIN.OUT2$s1
+rmse.1 <- sqrt(mean((actual.1 - predicted.1)^2, na.rm = TRUE))
+print(paste("Out-of-sample RMSE:", rmse.1))
+
+TRAIN.OUT3 = TRAIN.OUT2 %>%
+  group_by(class) %>%
+  summarise(count = n())
+```
+
+```{R, echo = F}
+
+true_labels <- TRAIN.OUT2$player1_won  # Example true labels
+predicted_labels <- TRAIN.OUT2$s1  # Example predicted labels
+
+
+correct <- which(true_labels == predicted_labels)
+false_positive <- which(true_labels == 0 & predicted_labels == 1)
+false_negative <- which(true_labels == 1 & predicted_labels == 0)
+
+
+plot(rep(0, length(correct)), correct, col = 'lightgreen', ylim = c(1, length(true_labels)),
+     xlim = c(-1, 1), ylab = 'Match', xlab = '', main = 'Correct, False Positive, and False Negative Scatter Plot', pch = 19)
+points(rep(1, length(false_positive)), false_positive, col = 'skyblue', pch = 19)
+points(rep(-1, length(false_negative)), false_negative, col = 'pink', pch = 19)
+
+
+
+
+legend('topright',legend = c('Correct', 'False Positive', 'False Negative'),
+       col = c('lightgreen', 'skyblue', 'pink'), pch = 19, xpd = TRUE, inset = c(0.15, 0))
+
+```
+
+```{r, echo = F}
+TRAIN.OUT3 = TRAIN.OUT2 %>%
+  group_by(class) %>%
+  summarise(count = n())
+
+ggplot(TRAIN.OUT3, aes(x = class, y = count, fill = class)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7)) +
+  labs(title = "Correct, False Positive, and False Negative Bar Graph",  # Centered and bold title
+       x = "",  # Empty x-axis label
+       y = "Count") +
+  guides(fill = guide_legend(title = "Class")) +
+  scale_fill_manual(values = c("correct" = "lightgreen", "false negative" = "pink", "false positive" = "skyblue")) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),  # Center and bold title
+    axis.text.x = element_text(angle = 45, hjust = 1, margin = margin(t = 10)),  # Add space above x-axis labels
+    axis.title.y = element_text(margin = margin(r = 10))  # Add space to the right of y-axis label
+  )
+
+
+```
+
+
+Crucially, the final logistic model we selected through model selection and cross-validation processes demonstrated a remarkable accuracy of 94 percent, while the false positive rate and the false negative rate were merely 3 percent each. This high level of accuracy underscores the effectiveness of our model in predicting match outcomes based on the available data.
+
+
+```{r, echo = F}
+ERROR.RESULTS = tibble(
+  Model = c("3 Way", "2 Way", "No Way"),
+  Sensitivity = c(RESULTS1[1,1]/sum(RESULTS1[1,]), RESULTS2[1,1]/sum(RESULTS2[1,]),
+                  RESULTS3[1,1]/sum(RESULTS3[1,])),
+  Specificity = c(RESULTS1[2,2]/sum(RESULTS1[2,]), RESULTS2[2,2]/sum(RESULTS2[2,]),
+                  RESULTS3[2,2]/sum(RESULTS3[2,])),
+  FPR = c(RESULTS1[2,1]/sum(RESULTS1[2,]), RESULTS2[2,1]/sum(RESULTS2[2,]), 
+          RESULTS3[2,1]/sum(RESULTS3[2,])),
+  FNR = c(RESULTS1[1,2]/sum(RESULTS1[1,]), RESULTS2[1,2]/sum(RESULTS2[1,]), 
+          RESULTS3[1,2]/sum(RESULTS3[1,]))
+)
+
+ERROR.RESULTS %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+
+Also, additional statistics to evaluate the accuracy of the model were calculated. The sensitivity of 0.94 indicates that our model had very few false negative results, and the specificity of nearly 0.93 verifies that our model was not susceptible to many false positive results. Furthermore, the very low false positive and false negative rates of 0.07 and 0.05, respectively, validate the accuracy of our model.
+
+However, our study wasn't without limitations. A key challenge was that the accuracy of the predictions, in terms of match results, relied on statistics available only after the completion of the matches. Despite this, our analysis still provided valuable insights into how various statistics in a tennis match could influence the outcome. These findings could be instrumental in future research, especially if we develop a system to store players' past performances in the same tournament and use those statistics for predictive analysis.
+
+Another limitation was the dataset's scope. While it included a large number of matches, it lacked detailed elements crucial in tennis statistics, such as ball spins and speed. Access to more comprehensive match data could significantly enhance the quality of our models.
+
+### Question 2
+
+```{r, include = F}
+
+transformed_data_2 = data %>%
+  filter(tourney_level != "G") %>%
+  select("minutes", "w_ace", "w_df", "w_svpt", "w_1stIn", "w_1stWon", "w_2ndWon", "w_SvGms", "w_bpSaved", "l_ace", "l_df", "l_svpt", "l_1stIn", "l_1stWon", "l_2ndWon", "l_SvGms", "l_bpSaved", "l_bpFaced", "winner_rank", "winner_rank_points", "loser_rank", "loser_rank_points") %>%
+  mutate(ace_diff = abs(w_ace - l_ace), df_diff = abs(w_df-l_df), svpt_diff = abs(w_svpt-l_svpt), 
+         diff_1stIn = abs(w_1stIn-l_1stIn), diff_1stWon = abs(w_1stWon-l_1stWon), 
+         diff_2ndWon = abs(w_2ndWon-l_2ndWon), SvGms_diff = abs(w_SvGms-l_SvGms), 
+         bpSaved_diff = abs(w_bpSaved-l_bpSaved), rank_diff = abs(winner_rank-loser_rank), 
+         rank_points_diff = abs(winner_rank_points-loser_rank_points)) %>%
+  select(minutes, ace_diff, df_diff, svpt_diff, diff_1stIn, diff_1stWon, diff_2ndWon, SvGms_diff, bpSaved_diff, 
+           rank_diff, rank_points_diff) %>%
+  na.omit()
+```
+
+```{r, include = F}
+set.seed(216)
+
+transformed_data_2$split = sample(x=c("TRAIN","TEST"),replace=T,size = 11337,prob=c(0.8,0.2))
+TRAIN = filter(transformed_data_2, split == "TRAIN")
+TEST = filter(transformed_data_2, split == "TEST")
+
+sample.in=sample(1:dim(TRAIN)[1],
+size=floor(0.8*dim(TEST)[1]))
+
+linmod1 = lm(minutes ~ ace_diff+df_diff+svpt_diff+diff_1stIn+diff_1stWon+diff_2ndWon+SvGms_diff+bpSaved_diff
+             +rank_diff+rank_points_diff, data = TRAIN)
+arrange(tidy(linmod1)[, c("term", "estimate", "p.value")], p.value)
+
+#linmod2 = step(linmod1, direction = "backward")
+#summary(linmod2)
+
+nullmod = lm(minutes~1, data = TRAIN)
+linmod3 = step(nullmod, scope = list(lower=nullmod,upper = linmod1), direction = "forward")
+
+linmod2 = lm(minutes ~ diff_1stIn + ace_diff + diff_2ndWon + bpSaved_diff + df_diff + SvGms_diff +
+               diff_1stWon + svpt_diff, data = TRAIN)
+arrange(tidy(linmod2)[, c("term", "estimate", "p.value")], p.value)
+
+TEST2 = TEST %>% 
+  add_predictions(linmod2,var="linpred") %>%
+  add_residuals(linmod2,var="linres")
+
+MAE.func = function(resid_vect){
+  return(mean(abs(resid_vect)))
+}
+
+MAE.func(TEST2$linres)
+```
+```{r, include = F}
+transformed_data_3 = data %>%
+  filter(tourney_level != "G") %>%
+  select("minutes", "w_ace", "w_df", "w_svpt", "w_1stIn", "w_1stWon", "w_2ndWon", "w_SvGms", "w_bpSaved", "l_ace", "l_df", "l_svpt", "l_1stIn", "l_1stWon", "l_2ndWon", "l_SvGms", "l_bpSaved", "l_bpFaced", "winner_rank", "winner_rank_points", "loser_rank", "loser_rank_points") %>%
+  na.omit()
+
+
+set.seed(216)
+
+transformed_data_3$split = sample(x=c("TRAIN","TEST"),replace=T,size = 11337,prob=c(0.8,0.2))
+TRAIN.TWO = filter(transformed_data_3, split == "TRAIN")
+TEST.TWO = filter(transformed_data_3, split == "TEST")
+
+sample.in=sample(1:dim(TRAIN.TWO)[1],
+size=floor(0.8*dim(TEST.TWO)[1]))
+
+
+linmod4 = lm(minutes ~ w_ace + w_df + w_svpt + w_1stIn + w_1stWon + w_2ndWon + w_SvGms +
+             w_bpSaved + l_ace + l_df + l_svpt + l_1stIn + l_1stWon + l_2ndWon + l_SvGms + 
+               l_bpSaved + l_bpFaced + winner_rank + winner_rank_points + loser_rank + 
+               loser_rank_points, data = TRAIN.TWO)
+arrange(tidy(linmod4)[, c("term", "estimate", "p.value")], p.value)
+
+nullmod = lm(minutes~1, data = TRAIN.TWO)
+linmod5 = step(nullmod, scope = list(lower=nullmod,upper = linmod4), direction = "forward")
+
+linmod6 = lm(minutes ~ w_svpt + l_svpt + w_ace + l_ace + loser_rank_points + winner_rank_points + 
+               l_SvGms + l_df + w_1stWon + w_df + w_2ndWon + l_2ndWon + w_bpSaved + loser_rank, data = TRAIN.TWO)
+arrange(tidy(linmod6)[, c("term", "estimate", "p.value")], p.value)
+
+TEST.TWO2 = TEST.TWO %>% 
+  add_predictions(linmod6,var="linpred") %>%
+  add_residuals(linmod6,var="linres")
+
+MAE.func(TEST.TWO2$linres)
+```
+
+
+In our second question, we aimed to investigate the relationship between the duration of a match, measured in minutes, and various other match statistics. To conduct this, we excluded all Grand Slam matches because they are Best-out-of-five, while the rest of the tournaments are all best-out-of-3. For this particular question, we use the original dataset instead of the masked dataset we used for question one. To answer our research question, we initially developed a comprehensive model using match duration as the dependent variable, with other match statistics serving as predictors [**w_svpt**, **l_svpt**, **w_ace**, **l_ace**, **loser_rank_points**, **winner_rank_points**, **l_SvGms**, **l_df**, **w_1stWon**, **w_df**, **w_2ndWon**, **l_2ndWon**, **w_bpSaved**, **loser_rank**]. 
+
+
+
+```{r, echo = F, warning = FALSE}
+
+ggplot(data = TEST.TWO2) +   
+  geom_histogram(aes(minutes, fill = "Actual"), alpha = 0.5, bins = 30) +   
+  geom_histogram(aes(linpred, fill = "Predicted"), alpha = 0.5, bins = 30) +   
+  labs(
+    title = "Actual Minutes vs Predicted Minutes Model 1",
+    x = "Minutes",
+    y = "Count"
+  ) + 
+  scale_fill_manual(
+    values = c("Actual" = "pink", "Predicted" = "skyblue"),
+    name = "Type"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold title
+  )
+
+
+```
+
+
+Despite achieving a promising mean absolute error (MAE) of 7.6, this model was potentially compromised by overfitting, a consequence of its large number of predictors. 
+
+
+To address this, we hypothesized that matches involving two players with closely matched statistics would tend to last longer. Based on this assumption, we refined our dataset, creating a new set of variables that quantified the absolute differences in player performance [**diff_1stIn**, **ace_diff**, **diff_2ndWon**, **bpSaved_diff**, **df_diff**, **SvGms_diff**, **diff_1stWon**, **svpt_diff**]. For example, **diff_1stIn** was calculated by: abs(**w_1stIn** - **l_1stIn**). 
+
+
+```{r, echo = F, warning = F}
+
+ggplot(data = TEST2) +
+  geom_histogram(aes(minutes, fill = "Actual"), alpha = 0.5, bins = 30) +
+  geom_histogram(aes(linpred, fill = "Predicted"), alpha = 0.5, bins = 30) +
+  labs(
+    title = "Actual Minutes vs Predicted Minutes Model 2",
+    x = "Minutes",
+    y = "Count"
+  ) +
+  scale_fill_manual(
+    values = c("Actual" = "pink", "Predicted" = "skyblue"),
+    name = "Type"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold")  # Center and bold title
+  )
+
+```
+
+
+However, this simplified model, while simpler, exhibited a larger MAE of 25.2, indicating less accurate predictions. Both models presented unique challenges: the first model, while accurate, was complicated by a large number of predictors, increasing the risk of overfitting; the second model, in contrast, benefited from simplicity but at the cost of greater prediction errors. There are limitations to it as well. First, our model only serves as a way for us to understand the relationship between match duration and match statistics. Applying this model to real-life tennis matches would be difficult due to the same problem with the absence of full statistics before matches. 
+
+
+```{r, echo= F, warning = F}
+
+MAE.TABLE <- data.frame(
+  Model = c("Model 1", "Model 2"), 
+  MAE = c(MAE.func(TEST.TWO2$linres), 
+          MAE.func(TEST2$linres)) 
+)
+
+MAE.TABLE %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE) %>%
+  column_spec(1, width = "2.5cm") %>%  # Adjust the width of the first column
+  column_spec(2, width = "2.5cm")     # Adjust the width of the second column
+
+
+
+```
+
+
+The limitation of our first model would be the lack of applicability for the original intention of using the relationship between match statistics and match duration to strategize for the match. The first model relies on anticipating a specific number of aces, double faults, etc. for both players, which would be hard for players and coaches to do before the match. Therefore, the second model was developed using the differences in statistics because this is something that could potentially be predicted. For example, say you are a player who tends to double-fault a lot more than your opponent. The difference in double faults could potentially be estimated and used to run the model. The drawback to this is that the model employing the differences in statistics was significantly less accurate. 
+
+
+# CONCLUSION
+
+Through our analysis, we answered two questions with our first question addressing which match statistics would best predict the outcome of tennis matches in the Association of Tennis Professionals (ATP), and our second question analyzing which match statistics are most useful in predicting the duration of matches in the ATP. To answer our first question we first had to create a new binary variable called **player1_won** with 1 representing Player 1 winning the match and 0 representing Player 2 winning the match. We then fitted a logistical model in three ways with different interactions where we found that all predictors had the same statistical results which led us to use a simple non-interactive model. With this non-interactive model, we did forward and backward selection and found that all thirteen of our predictors were significant. The final logistic regression we used had a high accuracy rate. For our second question, to find the most useful match statistics in predicting the match duration, we fit the model with minutes as a response and all other variables as predictors which gave us a high accuracy. We feel that this could be a result of potential overfitting due to the high number of predictors. Next, we looked to condense the data to show the difference in performance based on match statistics. The assumption is that players with similar statistics would have a longer match by modifying all of our existing variables to get the absolute difference between the players for each variable. We then found from this model that we had a greater error, despite it being simpler.
+
+The results of our study in question 2 are significant as they offer a nuanced understanding of tennis match duration. By effectively predicting match duration based on comprehensive match statistics, our research provides valuable insights into the dynamics of tennis matches. The first model's high accuracy, despite the risk of overfitting, suggests that detailed statistical analysis can be an effective tool in understanding and even anticipating match durations. This is particularly relevant for coaches and players, who could use such insights for strategic planning and training. Furthermore, our approach in the second model, focusing on the differences in player statistics, opens avenues for predictive analysis that could be more practical in real-time scenarios, such as during pre-match preparations.
+
+The results from our analysis could be applied to many aspects of tennis, from game strategy to stadium revenue to sports bettings. The ability to predict the duration of a match can be used by stadium owners to forecast concession and merchandise purchases. Players and coaches can use this technology to condition players based on the anticipated grit of a match; if the match is expected to be long, players will be trained to conserve energy, and if the match is expected to be shorter, players will strategize to attack during the games while maximizing recovery during the breaks. Our proposed model that identifies key characteristics in determining match outcomes would be beneficial to sports bettors and sports betting agencies. Sports bettors can make better, well-informed decisions when placing their bets. It is also great for players and coaches to make match strategies based on the opponents.
+
+In reflecting on our study, there are several areas where improvements could have been made to enhance the accuracy and applicability of our models. Although our models in question 2 aren’t ideal in predicting the match duration, we believe that other factors could play a role in determining this variable. Surface type could be important because certain surfaces are known to affect the speed of the ball. For example, grass courts have fast-moving balls, so players prefer to hit big serves and approach the net to finish the point quicker. On the contrary, clay courts have slower points, so players prefer to rally and sustain the point until their opponent runs out of stamina. Therefore, a model could potentially incorporate this variable to better predict match duration. A key area for improvement lies in the dataset itself. Our current dataset does not have information on some critical match statistics such as ball speed and spins, as well as placement of the ball on the court. Access to more detailed match statistics would have allowed for a more nuanced analysis. These factors play a crucial role in the dynamics of a tennis match and can significantly influence its duration and outcome. Additionally, exploring different statistical methods or more advanced modeling techniques could potentially yield better results. For instance, machine learning algorithms like Random Forest and SVMs might show complex patterns in the data that traditional models like GLM may miss.
+
+
+
+
+
+
+
