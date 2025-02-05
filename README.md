@@ -36,3 +36,22 @@ After data cleaning and transformation, we were left with 14,472 observations an
 
 The bar chart below provides a closer look at a singular match and compares Player 1’s and Player 2’s stats.
 
+![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-html/unnamed-chunk-3-1.png)
+
+## Results
+
+### Question 1
+
+In our analysis, we began by filtering out a dataset to include all relevant statistics for our study. We then fitted a Generalized Linear Model (GLM) using a logistical approach in three distinct ways: one incorporating up to third-degree interactions, another with only two-variable interactions, and a third with no interactions. Interestingly, all three models exhibited identical sensitivity, specificity, and other statistical measures. Consequently, we opted to use the simplest, no-interaction model. This choice was further validated when we conducted forward and backward selection processes on the no-interaction model, which indicated that all thirteen predictors were significant.
+
+![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/unnamed-chunk-6-1.png)
+
+![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/unnamed-chunk-7-1.png)
+
+Crucially, the final logistic model we selected through model selection and cross-validation processes demonstrated a remarkable accuracy of 94 percent, while the false positive rate and the false negative rate were merely 3 percent each. This high level of accuracy underscores the effectiveness of our model in predicting match outcomes based on the available data.
+
+|Model|Sensitivity|Specificity|FPR|FNR|
+|--|--|--|--|--|
+|3 Way|0.9586207|0.916129|0.083871|0.0413793|
+|2 Way|0.9586207|0.916129|0.083871|0.0413793|
+|No Way|0.9586207|0.916129|0.083871|0.0413793|
