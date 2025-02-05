@@ -26,7 +26,7 @@ To predict the match outcome with regression analysis for question 1, we needed 
 
 After data cleaning and transformation, we were left with 14,472 observations and 20 variables. The table below provides a glimpse of the first 5 rows of data.
 
-|player1_ace|player1_df|player1_svpt|space|space|space|space|space|space|space|space|space|space|space|space|space|space|space|space|space|
+|player1_ace|player1_df|player1_svpt|player1_1stIn|player1_1stWon|player1_2ndWon|player1_SvGms|player1_bpSaved|player1_bpFaced|player2_ace|player2_df|player2_svpt|player2_1stIn|player2_1stWon|player2_2ndWon|player2_SvGms|player2_bpSaved|player2_bpFaced|player1_won|minutes|
 |--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|
 |15|6|78|
 |1|0|50|
