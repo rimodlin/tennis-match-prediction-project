@@ -28,7 +28,7 @@ After data cleaning and transformation, we were left with 14,472 observations an
 
 |player1_ace|player1_df|player1_svpt|player1_1stIn|player1_1stWon|player1_2ndWon|player1_SvGms|player1_bpSaved|player1_bpFaced|player2_ace|player2_df|player2_svpt|player2_1stIn|player2_1stWon|player2_2ndWon|player2_SvGms|player2_bpSaved|player2_bpFaced|player1_won|minutes|
 |--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|--|
-|15|6|78|
-|1|0|50|
-|1|2|96|
+|15|6|78|51|38|14|11|10|11|0|2|70|50|32|7|10|3|5|1|129|
+|1|0|50|||||||||||||||||||
+|1|2|96|||||||||||||||||||
 
