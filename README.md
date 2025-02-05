@@ -55,3 +55,13 @@ Crucially, the final logistic model we selected through model selection and cros
 |3 Way|0.9586207|0.916129|0.083871|0.0413793|
 |2 Way|0.9586207|0.916129|0.083871|0.0413793|
 |No Way|0.9586207|0.916129|0.083871|0.0413793|
+
+Also, additional statistics to evaluate the accuracy of the model were calculated. The sensitivity of 0.94 indicates that our model had very few false negative results, and the specificity of nearly 0.93 verifies that our model was not susceptible to many false positive results. Furthermore, the very low false positive and false negative rates of 0.07 and 0.05, respectively, validate the accuracy of our model.
+
+However, our study wasn’t without limitations. A key challenge was that the accuracy of the predictions, in terms of match results, relied on statistics available only after the completion of the matches. Despite this, our analysis still provided valuable insights into how various statistics in a tennis match could influence the outcome. These findings could be instrumental in future research, especially if we develop a system to store players’ past performances in the same tournament and use those statistics for predictive analysis.
+
+Another limitation was the dataset’s scope. While it included a large number of matches, it lacked detailed elements crucial in tennis statistics, such as ball spins and speed. Access to more comprehensive match data could significantly enhance the quality of our models.
+
+## Question 2
+
+In our second question, we aimed to investigate the relationship between the duration of a match, measured in minutes, and various other match statistics. To conduct this, we excluded all Grand Slam matches because they are Best-out-of-five, while the rest of the tournaments are all best-out-of-3. For this particular question, we use the original dataset instead of the masked dataset we used for question one. To answer our research question, we initially developed a comprehensive model using match duration as the dependent variable, with other match statistics serving as predictors [**w_svpt**, **l_svpt**, **w_ace**, **l_ace**, **loser_rank_points**, **winner_rank_points**, **l_SvGms**, **l_df**, **w_1stWon**, **w_df**, **w_2ndWon**, **l_2ndWon**, **w_bpSaved**, **loser_rank**].
