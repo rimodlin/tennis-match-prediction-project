@@ -34,3 +34,5 @@ After data cleaning and transformation, we were left with 14,472 observations an
 |6|0|45|33|25|8|8|0|0|2|1|38|27|17|1|7|4|8|1|53|
 |6|2|48|35|22|4|8|3|7|6|4|41|25|22|10|8|0|0|0|68|
 
+The bar chart below provides a closer look at a singular match and compares Player 1’s and Player 2’s stats.
+
