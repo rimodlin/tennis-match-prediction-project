@@ -65,3 +65,10 @@ Another limitation was the dataset’s scope. While it included a large number o
 ## Question 2
 
 In our second question, we aimed to investigate the relationship between the duration of a match, measured in minutes, and various other match statistics. To conduct this, we excluded all Grand Slam matches because they are Best-out-of-five, while the rest of the tournaments are all best-out-of-3. For this particular question, we use the original dataset instead of the masked dataset we used for question one. To answer our research question, we initially developed a comprehensive model using match duration as the dependent variable, with other match statistics serving as predictors [**w_svpt**, **l_svpt**, **w_ace**, **l_ace**, **loser_rank_points**, **winner_rank_points**, **l_SvGms**, **l_df**, **w_1stWon**, **w_df**, **w_2ndWon**, **l_2ndWon**, **w_bpSaved**, **loser_rank**].
+
+![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/unnamed-chunk-12-1.png)
+
+Despite achieving a promising mean absolute error (MAE) of 7.6, this model was potentially compromised by overfitting, a consequence of its large number of predictors.
+
+To address this, we hypothesized that matches involving two players with closely matched statistics would tend to last longer. Based on this assumption, we refined our dataset, creating a new set of variables that quantified the absolute differences in player performance [**diff_1stIn**, **ace_diff**, **diff_2ndWon**, **bpSaved_diff**, **df_diff**, **SvGms_diff**, **diff_1stWon**, **svpt_diff**]. For example, **diff_1stIn** was calculated by: abs(**w_1stIn** - **l_1stIn**).
+
