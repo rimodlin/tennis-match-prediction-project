@@ -44,9 +44,9 @@ The bar chart below provides a closer look at a singular match and compares Play
 
 In our analysis, we began by filtering out a dataset to include all relevant statistics for our study. We then fitted a Generalized Linear Model (GLM) using a logistical approach in three distinct ways: one incorporating up to third-degree interactions, another with only two-variable interactions, and a third with no interactions. Interestingly, all three models exhibited identical sensitivity, specificity, and other statistical measures. Consequently, we opted to use the simplest, no-interaction model. This choice was further validated when we conducted forward and backward selection processes on the no-interaction model, which indicated that all thirteen predictors were significant.
 
-![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/Correct, False Positive, and False Negative Scatter Plot - tennis prediction.png)
+![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/cfpfn-scatter-plot-tennis-prediction.png)
 
-![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/Correct, False Positive, and False Negative Bar Graph - tennis prediction.png)
+![alt text](https://github.com/rimodlin/tennis-match-prediction-project/blob/main/Final-Paper--Group-9_files/figure-docx/cfpfn-bar-graph-tennis-prediction.png)
 
 Crucially, the final logistic model we selected through model selection and cross-validation processes demonstrated a remarkable accuracy of 94 percent, while the false positive rate and the false negative rate were merely 3 percent each. This high level of accuracy underscores the effectiveness of our model in predicting match outcomes based on the available data.
 
