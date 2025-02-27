@@ -56,7 +56,7 @@ Crucially, the final logistic model we selected through model selection and cros
 |--|--|--|--|--|
 |3 Way|0.9586207|0.916129|0.083871|0.0413793|
 |2 Way|0.9586207|0.916129|0.083871|0.0413793|
-|No Way|0.9586207|0.916129|0.083871|0.0413793|
+|1 Way|0.9586207|0.916129|0.083871|0.0413793|
 
 Also, additional statistics to evaluate the accuracy of the model were calculated. The sensitivity of 0.94 indicates that our model had very few false negative results, and the specificity of nearly 0.93 verifies that our model was not susceptible to many false positive results. Furthermore, the very low false positive and false negative rates of 0.07 and 0.05, respectively, validate the accuracy of our model.
 
