@@ -270,7 +270,7 @@ Crucially, the final logistic model we selected through model selection and cros
 
 ```{r, echo = F}
 ERROR.RESULTS = tibble(
-  Model = c("3 Way", "2 Way", "No Way"),
+  Model = c("3 Way", "2 Way", "1 Way"),
   Sensitivity = c(RESULTS1[1,1]/sum(RESULTS1[1,]), RESULTS2[1,1]/sum(RESULTS2[1,]),
                   RESULTS3[1,1]/sum(RESULTS3[1,])),
   Specificity = c(RESULTS1[2,2]/sum(RESULTS1[2,]), RESULTS2[2,2]/sum(RESULTS2[2,]),
