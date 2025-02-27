@@ -22,7 +22,7 @@ library(purrr)
 
 # INTRODUCTION
 
-With a rich history and a vast global outreach, Tennis is arguably the most popular sport in the world. Beyond its contributions to individual health and community engagement, tennis has become a powerful force when it comes to building international connections. Major tournaments, containing players from most of the major countries, attract tens of millions of viewers worldwide, creating a shared experience that transcends cultural and geographic boundaries. In this dynamic world of aces and volleys, tennis stands as a sport that reaches much further than meets the eye, influencing individuals and societies alike.
+With a rich history and a vast global outreach, Tennis is one of the most popular sports in the world. Beyond its contributions to individual health and community engagement, tennis has become a powerful force when it comes to building international connections. Major tournaments, containing players from most of the major countries, attract tens of millions of viewers worldwide, creating a shared experience that transcends cultural and geographic boundaries. In this dynamic world of aces and volleys, tennis stands as a sport that reaches much further than meets the eye, influencing individuals and societies alike.
 
 Our analysis focuses on individual tennis matches as we look to determine how to predict match outcomes and match durations. Through our initial studies, we found that a tennis match can be influenced by a wide variety of variables. As we dove into the relationships between these variables in our exploratory data analysis, we aimed to focus on questions that sought to discover how important match-specific statistics influence a tennis match. Through deep analysis and heavy discussion, we felt that these two questions would be interesting and important to explore further.
 
@@ -199,6 +199,8 @@ RESULTS3 = table(TRAIN.OUT2$player1_won, TRAIN.OUT2$s3) %>%
   prop.table()
 RESULTS4 = table(TRAIN.OUT2$player1_won, TRAIN.OUT2$s4) %>%
   prop.table()
+
+RESULTS1
 ```
 
 
